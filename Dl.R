@@ -33,16 +33,16 @@ test_set <- (ceiling(df_count / 4 * 3) + 1)
 ## Clean the corpus
 clean_corpus <- function(corpus) {
   corpus %>%
-  tm_map(content_transformer(tolower)) %>% 
-  tm_map(removePunctuation) %>%
-  tm_map(removeNumbers) %>%
-  tm_map(removeWords, stopwords(kind="en"))
+    tm_map(content_transformer(tolower)) %>% 
+    tm_map(removePunctuation) %>%
+    tm_map(removeNumbers) %>%
+    tm_map(removeWords, stopwords(kind="en"))
 }
 
 ## Prepare the set for NaiveBayes
 convert_count <- function(x) {
   y <- ifelse(x > 0, 1,0)
-  y <- factor(y, levels=c(0,1), labels=c("No", "Yes"))
+  y <- factor(y, levels=c(0,1))
   y
 }
 
@@ -75,29 +75,33 @@ corpus <- clean_corpus(corpus)
 dtm <- DocumentTermMatrix(corpus)
 
 ## Used for the statistics later on
-df.train <- df[train_set,]
-df.test <- df[test_set:df_count,]
+df_train <- df[train_set,]
+df_test <- df[test_set:df_count,]
 
-dtm.train <- dtm[train_set,]
-dtm.test <- dtm[test_set:df_count,]
+dtm_train <- dtm[train_set,]
+dtm_test <- dtm[test_set:df_count,]
 
-corpus.clean.train <- corpus[train_set]
-corpus.clean.test <- corpus[test_set:df_count]
+corpus_clean_train <- corpus[train_set]
+corpus_clean_test <- corpus[test_set:df_count]
 
-fivefreq <- findFreqTerms(dtm.train, 420)
+## Only use words that appear more than X times
+frequent_terms <- findFreqTerms(dtm_train, 420)
 
-dtm.train.nb <- DocumentTermMatrix(corpus.clean.train, control=list(dictionary = fivefreq))
-dtm.test.nb <- DocumentTermMatrix(corpus.clean.test, control=list(dictionary = fivefreq))
+## Create the DocumentTermMatrices using the frequent_terms dictionary
+dtm_train_nb <- DocumentTermMatrix(corpus_clean_train, control=list(dictionary = frequent_terms))
+dtm_test_nb <- DocumentTermMatrix(corpus_clean_test, control=list(dictionary = frequent_terms))
 
-trainNB <- apply(dtm.train.nb, 2, convert_count)
-testNB <- apply(dtm.test.nb, 2, convert_count)
+## Check for word occurence instead of frequency. This improves the accuracy of the model
+trainNB <- apply(dtm_train_nb, 2, convert_count)
+testNB <- apply(dtm_test_nb, 2, convert_count)
 
-classifier <- naiveBayes(trainNB, df.train$sentiment, laplace = 1)
+## Train the naiveBayes model & predict using the test set
+classifier <- naiveBayes(trainNB, df_train$sentiment)
 prediction <- predict(classifier, newdata=testNB)
 
-conf.mat <- confusionMatrix(prediction, df.test$sentiment)
+conf_mat <- confusionMatrix(prediction, df_test$sentiment)
 
-conf.mat
+conf_mat
 
 
 ## My own reviews

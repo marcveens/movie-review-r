@@ -19,7 +19,7 @@ getValuesFromTxt <- function(files, sentiment) {
 
 setwd("C:\Users\MarcVe\OneDrive\Documenten\HvA\2017\Data analysis\Individual")
 
-data <- read.csv2("dataset/1/labeledTrainData.csv", sep="\t")
+data <- read.csv2("dataset/1/labeledTrainData.csv", quote="", sep="\t")
 data$id <- NULL
 colnames(data)[2] <- "text"
 
